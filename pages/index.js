@@ -86,7 +86,7 @@ export default function BankSimulator() {
     }
 
     if (transferAmount > currentBalance) {
-      updateStatus('Amount exceeds current balance', 'error');
+      updateStatus('Insufficient funds', 'error');
       return;
     }
 
