@@ -3,7 +3,7 @@ import { useState } from 'react';
 function checkBalance(amount, currentBalance) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (Math.random() < 0.2) {
+      if (Math.random() < 0.05) {
         reject(new Error("Balance check failed - Service temporarily unavailable"));
         return;
       }
@@ -13,7 +13,7 @@ function checkBalance(amount, currentBalance) {
         return;
       }
       
-      resolve(`Balance verified: $${currentBalance.toFixed(2)}`);
+      resolve(`Balance verified: ${currentBalance.toFixed(2)}`);
     }, 1500);
   });
 }
@@ -21,12 +21,12 @@ function checkBalance(amount, currentBalance) {
 function deductAmount(amount) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (Math.random() < 0.15) {
+      if (Math.random() < 0.03) {
         reject(new Error("Deduction failed - Database error"));
         return;
       }
       
-      resolve(`Amount deducted: $${amount.toFixed(2)}`);
+      resolve(`Amount deducted: ${amount.toFixed(2)}`);
     }, 1500);
   });
 }
@@ -34,7 +34,7 @@ function deductAmount(amount) {
 function confirmTransaction() {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (Math.random() < 0.1) {
+      if (Math.random() < 0.02) {
         reject(new Error("Transaction confirmation failed - Network timeout"));
         return;
       }
@@ -80,16 +80,6 @@ export default function BankSimulator() {
       return;
     }
 
-    if (transferAmount > 1000) {
-      updateStatus('Amount cannot exceed $1000', 'error');
-      return;
-    }
-
-    if (transferAmount > currentBalance) {
-      updateStatus('Insufficient funds', 'error');
-      return;
-    }
-
     setIsTransferring(true);
     resetSteps();
     setStatus({ message: '', type: '', visible: false });
@@ -121,15 +111,21 @@ export default function BankSimulator() {
       setAmount('');
 
     } catch (error) {
-      const currentSteps = steps;
-      
-      if (currentSteps.find(s => s.id === 1)?.status === 'processing') {
-        updateStepStatus(1, 'failed');
-      } else if (currentSteps.find(s => s.id === 2)?.status === 'processing') {
-        updateStepStatus(2, 'failed');
-        setCurrentBalance(currentBalance);
-      } else if (currentSteps.find(s => s.id === 3)?.status === 'processing') {
-        updateStepStatus(3, 'failed');
+      setSteps(currentSteps => {
+        const processingStep = currentSteps.find(step => step.status === 'processing');
+        
+        if (processingStep) {
+          return currentSteps.map(step => 
+            step.id === processingStep.id 
+              ? { ...step, status: 'failed' }
+              : step
+          );
+        }
+        return currentSteps;
+      });
+
+      if (steps.find(s => s.id === 2)?.status === 'processing' || 
+          steps.find(s => s.id === 3)?.status === 'processing') {
         setCurrentBalance(currentBalance);
       }
 
@@ -204,7 +200,6 @@ export default function BankSimulator() {
           <input
             type="number"
             min="1"
-            max="1000"
             step="0.01"
             placeholder="Enter amount to transfer"
             value={amount}
@@ -217,7 +212,9 @@ export default function BankSimulator() {
               borderRadius: '8px',
               fontSize: '1rem',
               outline: 'none',
-              transition: 'border-color 0.3s ease'
+              transition: 'border-color 0.3s ease',
+              boxSizing: 'border-box',
+              appearance: 'textfield'
             }}
           />
         </div>
@@ -330,6 +327,16 @@ export default function BankSimulator() {
         
         input:focus {
           border-color: #667eea !important;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        input[type=number] {
+          -moz-appearance: textfield;
         }
         
         button:hover:not(:disabled) {
