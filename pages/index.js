@@ -75,11 +75,13 @@ export default function BankSimulator() {
   const startTransfer = async () => {
     const transferAmount = parseFloat(amount);
 
+    // Only check for basic validation - amount must be positive
     if (!transferAmount || transferAmount <= 0) {
       updateStatus('Please enter a valid amount', 'error');
       return;
     }
 
+    // Let all other checks (including balance) happen through the transaction steps
     setIsTransferring(true);
     resetSteps();
     setStatus({ message: '', type: '', visible: false });
@@ -111,6 +113,7 @@ export default function BankSimulator() {
       setAmount('');
 
     } catch (error) {
+      // Get the current state of steps to determine which one failed
       setSteps(currentSteps => {
         const processingStep = currentSteps.find(step => step.status === 'processing');
         
@@ -124,6 +127,7 @@ export default function BankSimulator() {
         return currentSteps;
       });
 
+      // If deduction or confirmation failed, restore the original balance
       if (steps.find(s => s.id === 2)?.status === 'processing' || 
           steps.find(s => s.id === 3)?.status === 'processing') {
         setCurrentBalance(currentBalance);
